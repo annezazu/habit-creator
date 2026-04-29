@@ -1,0 +1,206 @@
+.habit-creator {
+	font-size: 13px;
+	line-height: 1.5;
+	color: #1d2327;
+}
+
+.habit-creator-intro {
+	margin: 0 0 12px;
+	color: #50575e;
+	font-size: 12px;
+	font-style: italic;
+}
+
+.habit-creator-empty {
+	margin: 0;
+	color: #50575e;
+}
+
+.habit-creator-card {
+	position: relative;
+}
+
+.habit-creator-card.is-hero {
+	display: flex;
+	gap: 16px;
+	padding: 12px 28px 14px 0;
+	border-bottom: 1px solid #e5e5e5;
+	margin-bottom: 10px;
+}
+
+.habit-creator-stat {
+	flex-shrink: 0;
+	width: 72px;
+	min-height: 72px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	background: #f0f6fc;
+	border: 1px solid #c5d9ed;
+	border-radius: 6px;
+	padding: 6px 4px;
+}
+
+.habit-creator-stat-number {
+	font-size: 36px;
+	font-weight: 700;
+	line-height: 1;
+	color: #2271b1;
+	font-variant-numeric: tabular-nums;
+}
+
+.habit-creator-stat-label {
+	margin-top: 2px;
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	color: #2271b1;
+}
+
+.habit-creator-body {
+	flex: 1;
+	min-width: 0;
+}
+
+.habit-creator-kicker {
+	margin: 0 0 2px;
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	color: #787c82;
+	text-transform: uppercase;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.habit-creator-topic {
+	margin: 0 0 4px;
+	font-size: 17px;
+	font-weight: 600;
+	line-height: 1.25;
+	color: #1d2327;
+}
+
+.habit-creator-timing {
+	margin: 0 0 6px;
+	font-size: 12px;
+	color: #50575e;
+}
+
+.habit-creator-encouragement {
+	margin: 0 0 6px;
+	font-size: 13px;
+	color: #1d2327;
+}
+
+.habit-creator-prior {
+	margin: 0 0 10px;
+	font-size: 12px;
+	color: #787c82;
+}
+
+.habit-creator-prior a {
+	color: #2271b1;
+}
+
+.habit-creator-actions {
+	margin: 0;
+}
+
+.habit-creator-ai-badge {
+	font-size: 9px;
+	font-weight: 600;
+	letter-spacing: 0.05em;
+	color: #fff;
+	background: #674ea7;
+	padding: 1px 5px;
+	border-radius: 3px;
+}
+
+.habit-creator-dismiss {
+	position: absolute;
+	top: 4px;
+	right: 0;
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: #a7aaad;
+	font-size: 18px;
+	line-height: 1;
+	cursor: pointer;
+	border-radius: 3px;
+}
+
+.habit-creator-dismiss:hover {
+	color: #1d2327;
+	background: #f0f0f1;
+}
+
+.habit-creator-expand {
+	margin: 4px 0;
+	padding: 4px 0;
+	border: 0;
+	background: transparent;
+	color: #2271b1;
+	font-size: 12px;
+	cursor: pointer;
+}
+
+.habit-creator-expand:hover {
+	color: #135e96;
+	text-decoration: underline;
+}
+
+.habit-creator-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.habit-creator-card.is-compact {
+	padding: 8px 28px 8px 0;
+	border-top: 1px solid #f0f0f1;
+}
+
+.habit-creator-compact-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.habit-creator-streak-inline {
+	font-weight: 700;
+	color: #2271b1;
+	font-variant-numeric: tabular-nums;
+}
+
+.habit-creator-kicker-inline {
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	color: #787c82;
+}
+
+.habit-creator-topic-inline {
+	font-weight: 600;
+	color: #1d2327;
+}
+
+.habit-creator-compact-meta {
+	margin-top: 2px;
+	font-size: 12px;
+	color: #50575e;
+}
+
+.habit-creator-timing-inline {
+	color: #787c82;
+}
+
+.habit-creator-compact .habit-creator-create {
+	margin-left: auto;
+}
