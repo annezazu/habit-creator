@@ -2,6 +2,17 @@
 	font-size: 13px;
 	line-height: 1.5;
 	color: #1d2327;
+
+	/*
+	 * Adopt the active admin color scheme. WordPress core sets
+	 * --wp-admin-theme-color per scheme (default Modern → #3858E9,
+	 * Default Blue → #2271b1, Coffee → #59524c, etc.). We derive the
+	 * stat box's tint from that single token using color-mix so the
+	 * widget reads as part of the admin chrome, not an island.
+	 */
+	--habit-creator-accent: var( --wp-admin-theme-color, #2271b1 );
+	--habit-creator-accent-bg: color-mix( in srgb, var( --wp-admin-theme-color, #2271b1 ) 8%, #fff );
+	--habit-creator-accent-border: color-mix( in srgb, var( --wp-admin-theme-color, #2271b1 ) 30%, #fff );
 }
 
 .habit-creator-intro {
@@ -22,6 +33,7 @@
 
 .habit-creator-card.is-hero {
 	display: flex;
+	align-items: flex-start;
 	gap: 16px;
 	padding: 12px 28px 14px 0;
 	border-bottom: 1px solid #e5e5e5;
@@ -29,24 +41,25 @@
 }
 
 .habit-creator-stat {
-	flex-shrink: 0;
+	flex: 0 0 72px;
 	width: 72px;
-	min-height: 72px;
+	height: 72px;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	background: #f0f6fc;
-	border: 1px solid #c5d9ed;
+	background: var( --habit-creator-accent-bg );
+	border: 1px solid var( --habit-creator-accent-border );
 	border-radius: 6px;
 	padding: 6px 4px;
+	box-sizing: border-box;
 }
 
 .habit-creator-stat-number {
 	font-size: 36px;
 	font-weight: 700;
 	line-height: 1;
-	color: #2271b1;
+	color: var( --habit-creator-accent );
 	font-variant-numeric: tabular-nums;
 }
 
@@ -55,7 +68,7 @@
 	font-size: 10px;
 	font-weight: 600;
 	letter-spacing: 0.08em;
-	color: #2271b1;
+	color: var( --habit-creator-accent );
 }
 
 .habit-creator-body {
@@ -102,7 +115,7 @@
 }
 
 .habit-creator-prior a {
-	color: #2271b1;
+	color: var( --habit-creator-accent );
 }
 
 .habit-creator-actions {
@@ -114,7 +127,7 @@
 	font-weight: 600;
 	letter-spacing: 0.05em;
 	color: #fff;
-	background: #674ea7;
+	background: var( --habit-creator-accent );
 	padding: 1px 5px;
 	border-radius: 3px;
 }
@@ -145,14 +158,14 @@
 	padding: 4px 0;
 	border: 0;
 	background: transparent;
-	color: #2271b1;
+	color: var( --habit-creator-accent );
 	font-size: 12px;
 	cursor: pointer;
 }
 
 .habit-creator-expand:hover {
-	color: #135e96;
 	text-decoration: underline;
+	filter: brightness( 0.85 );
 }
 
 .habit-creator-list {
@@ -175,7 +188,7 @@
 
 .habit-creator-streak-inline {
 	font-weight: 700;
-	color: #2271b1;
+	color: var( --habit-creator-accent );
 	font-variant-numeric: tabular-nums;
 }
 

@@ -2,11 +2,19 @@
 /**
  * Optional AI enhancement layer.
  *
- * Detects whether a registered Connector advertises `type === 'ai_provider'`
- * (added in WordPress 7.0) and, if so, uses the AI Client to generate a
- * warmer, more personal nudge headline and a draft opening paragraph.
+ * Two narrowly-scoped touch-points only:
+ *   1. The dashboard encouragement line — one short sentence in the widget UI.
+ *      Never enters a post.
+ *   2. A list of topic-specific *starter questions* offered as scaffolding
+ *      inside a new draft. Questions, not prose. They prompt the writer to
+ *      think; they don't write for them.
  *
- * The plugin must remain fully functional when none of these APIs exist.
+ * Both are gated by:
+ *   (a) function_exists( 'wp_ai_client_prompt' )
+ *   (b) at least one Connector with type === 'ai_provider'
+ *   (c) the user setting habit_creator_use_ai
+ *
+ * Any failure or empty response falls back silently to deterministic copy.
  *
  * @package HabitCreator
  */
@@ -20,6 +28,9 @@ defined( 'ABSPATH' ) || exit;
 final class AI_Enhancer {
 
 	public static function is_available(): bool {
+		if ( ! Settings::ai_enabled() ) {
+			return false;
+		}
 		if ( ! function_exists( 'wp_get_connectors' ) || ! function_exists( 'wp_ai_client_prompt' ) ) {
 			return false;
 		}
@@ -32,8 +43,7 @@ final class AI_Enhancer {
 	}
 
 	/**
-	 * Replace each pattern's plain headline with an AI-written nudge.
-	 * Falls back silently to the deterministic headline on any error.
+	 * Replace each pattern's encouragement with an AI-written one when available.
 	 *
 	 * @param array<int, array<string, mixed>> $patterns
 	 * @return array<int, array<string, mixed>>
@@ -57,46 +67,70 @@ final class AI_Enhancer {
 		$best       = $pattern['best_post'];
 		$year_count = count( $pattern['years'] );
 		$prompt     = sprintf(
-			'In one warm, encouraging sentence (under 30 words), nudge a blogger to write a follow-up post. They have written %1$d posts on the topic "%2$s" across %1$d different years. Their most recent on this topic was titled "%3$s" and received %4$d comments. Do not use exclamation points. Do not be sycophantic.',
+			'In one warm, encouraging sentence (under 25 words), nudge a blogger to write a follow-up post. They have written %1$d posts on the topic "%2$s" across %1$d different years. Their most recent on this topic was titled "%3$s" and received %4$d comments. No exclamation points. No flattery. Reference the streak or the readers, not the topic name.',
 			$year_count,
 			(string) $pattern['label'],
 			(string) $best['title'],
 			(int) $best['comments']
 		);
 
-		try {
-			$response = wp_ai_client_prompt( $prompt )
-				->using_temperature( 0.4 )
-				->generate_text();
-		} catch ( \Throwable $e ) {
-			return null;
-		}
-
-		$text = is_string( $response ) ? trim( $response ) : '';
-		return $text !== '' ? $text : null;
+		return self::run_prompt( $prompt );
 	}
 
 	/**
-	 * Generate an opening paragraph for the new draft. Returns null if AI is unavailable.
+	 * Topic-specific starter questions that scaffold a new draft. The user
+	 * answers them; they replace neither the user's voice nor the post body.
+	 *
+	 * Returns array of question strings (3-5 typical) or null when unavailable.
 	 *
 	 * @param array<string, mixed> $pattern
+	 * @return array<int, string>|null
 	 */
-	public static function generate_draft_intro( array $pattern ): ?string {
+	public static function generate_writing_prompts( array $pattern ): ?array {
 		if ( ! self::is_available() ) {
 			return null;
 		}
 
 		$best   = $pattern['best_post'];
 		$prompt = sprintf(
-			'Write a short opening paragraph (3-4 sentences) for a blog post that revisits a recurring topic. The author previously wrote "%1$s" on the same theme. Frame this new post as a yearly update or continuation, but do not assume what has changed. Leave a placeholder like [add this year\'s update here] where specifics should go. Avoid clichés like "time flies" or "another year".',
+			'Generate 4 short, specific questions to help a blogger think through a new post that revisits a recurring topic. The topic is "%1$s". Their previous post on this thread was titled "%2$s". The questions should help them notice what has changed, what worked, and what is new — without prescribing a structure or putting words in their mouth. Return ONLY the questions, one per line, no numbering, no bullets, no preamble. Maximum 12 words per question.',
+			(string) $pattern['label'],
 			(string) $best['title']
 		);
 
+		$raw = self::run_prompt( $prompt );
+		if ( $raw === null ) {
+			return null;
+		}
+
+		$lines = array_values( array_filter(
+			array_map(
+				static fn( $line ) => trim( preg_replace( '/^[\d\.\-\*\)\s]+/', '', $line ) ?? '' ),
+				explode( "\n", $raw )
+			),
+			static fn( $line ) => $line !== '' && strlen( $line ) > 5
+		) );
+
+		return $lines ? array_slice( $lines, 0, 5 ) : null;
+	}
+
+	/**
+	 * Single chokepoint for AI calls. generate_text() returns either a string
+	 * or a WP_Error per the wp-ai-client contract; we accept only non-empty
+	 * strings and fall back silently in every other case.
+	 *
+	 * Temperature is intentionally not set — current Claude models (Claude 4+)
+	 * reject the parameter as deprecated, and provider defaults are fine for
+	 * our short-form prompts.
+	 */
+	private static function run_prompt( string $prompt ): ?string {
 		try {
-			$response = wp_ai_client_prompt( $prompt )
-				->using_temperature( 0.6 )
-				->generate_text();
+			$response = wp_ai_client_prompt( $prompt )->generate_text();
 		} catch ( \Throwable $e ) {
+			return null;
+		}
+
+		if ( is_wp_error( $response ) ) {
 			return null;
 		}
 

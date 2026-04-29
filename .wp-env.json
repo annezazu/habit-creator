@@ -1,0 +1,13 @@
+{
+	"testsEnvironment": false,
+	"core": "WordPress/WordPress#master",
+	"plugins": [
+		".",
+		"https://downloads.wordpress.org/plugin/ai-provider-for-anthropic.latest-stable.zip",
+		"https://downloads.wordpress.org/plugin/ai-provider-for-openai.latest-stable.zip"
+	],
+	"config": {
+		"WP_DEBUG": true,
+		"WP_DEBUG_LOG": true
+	}
+}
