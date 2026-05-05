@@ -53,7 +53,12 @@
 
 		if ( event.target.closest( '.habit-creator-dismiss' ) ) {
 			event.preventDefault();
-			postForm( 'habit_creator_dismiss', key ).then( () => {
+			postForm( 'habit_creator_dismiss', key ).then( ( res ) => {
+				const root = card.closest( '.habit-creator' );
+				if ( root && res && res.success && res.data && typeof res.data.html === 'string' ) {
+					root.innerHTML = res.data.html;
+					return;
+				}
 				const wrapper = card.closest( 'li' ) || card;
 				wrapper.remove();
 			} );

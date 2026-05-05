@@ -56,8 +56,13 @@ final class Dashboard_Widget {
 	}
 
 	public static function render(): void {
-		$user_id  = get_current_user_id();
-		$is_mock  = ! empty( $_GET['habit_creator_mock'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$is_mock = ! empty( $_GET['habit_creator_mock'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		echo '<div class="habit-creator">';
+		echo self::render_inner( get_current_user_id(), $is_mock ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — trusted markup assembled in render_inner
+		echo '</div>';
+	}
+
+	private static function render_inner( int $user_id, bool $is_mock ): string {
 		$patterns = $is_mock
 			? Pattern_Detector::mock_patterns_for_user( $user_id )
 			: Pattern_Detector::patterns_for_user( $user_id );
@@ -69,13 +74,12 @@ final class Dashboard_Widget {
 			) );
 		}
 
-		echo '<div class="habit-creator">';
+		ob_start();
 		echo '<p class="habit-creator-intro">' . esc_html__( 'Streaks from your archive — keep the habits going.', 'habit-creator' ) . '</p>';
 
 		if ( ! $patterns ) {
 			echo '<p class="habit-creator-empty">' . esc_html__( 'No live streaks right now. As you build a recurring archive, Habit Creator will surface the rhythms it spots.', 'habit-creator' ) . '</p>';
-			echo '</div>';
-			return;
+			return (string) ob_get_clean();
 		}
 
 		$hero = array_shift( $patterns );
@@ -100,7 +104,7 @@ final class Dashboard_Widget {
 			echo '</ul>';
 		}
 
-		echo '</div>';
+		return (string) ob_get_clean();
 	}
 
 	/**
@@ -244,6 +248,6 @@ final class Dashboard_Widget {
 		$dismissed   = (array) get_user_meta( $user_id, self::DISMISSED_USERMETA, true );
 		$dismissed[] = $pattern_key;
 		update_user_meta( $user_id, self::DISMISSED_USERMETA, array_values( array_unique( $dismissed ) ) );
-		wp_send_json_success();
+		wp_send_json_success( [ 'html' => self::render_inner( $user_id, false ) ] );
 	}
 }
