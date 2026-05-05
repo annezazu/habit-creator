@@ -6,13 +6,13 @@
 	/*
 	 * Adopt the active admin color scheme. WordPress core sets
 	 * --wp-admin-theme-color per scheme (default Modern → #3858E9,
-	 * Default Blue → #2271b1, Coffee → #59524c, etc.). We derive the
-	 * stat box's tint from that single token using color-mix so the
-	 * widget reads as part of the admin chrome, not an island.
+	 * Default Blue → #2271b1, Coffee → #59524c, etc.). We derive a soft
+	 * tint from that single token using color-mix so the widget reads as
+	 * part of the admin chrome, not an island.
 	 */
 	--habit-creator-accent: var( --wp-admin-theme-color, #2271b1 );
-	--habit-creator-accent-bg: color-mix( in srgb, var( --wp-admin-theme-color, #2271b1 ) 8%, #fff );
-	--habit-creator-accent-border: color-mix( in srgb, var( --wp-admin-theme-color, #2271b1 ) 30%, #fff );
+	--habit-creator-accent-bg: color-mix( in srgb, var( --wp-admin-theme-color, #2271b1 ) 6%, #fff );
+	--habit-creator-accent-border: color-mix( in srgb, var( --wp-admin-theme-color, #2271b1 ) 25%, #fff );
 }
 
 .habit-creator-intro {
@@ -32,109 +32,163 @@
 }
 
 .habit-creator-card.is-hero {
-	display: flex;
-	align-items: flex-start;
-	gap: 16px;
-	padding: 12px 28px 14px 0;
+	padding: 4px 28px 14px 0;
 	border-bottom: 1px solid #e5e5e5;
-	margin-bottom: 10px;
+	margin-bottom: 12px;
 }
 
-.habit-creator-stat {
-	flex: 0 0 72px;
-	width: 72px;
-	height: 72px;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	background: var( --habit-creator-accent-bg );
-	border: 1px solid var( --habit-creator-accent-border );
-	border-radius: 6px;
-	padding: 6px 4px;
-	box-sizing: border-box;
-}
-
-.habit-creator-stat-number {
-	font-size: 36px;
-	font-weight: 700;
-	line-height: 1;
-	color: var( --habit-creator-accent );
-	font-variant-numeric: tabular-nums;
-}
-
-.habit-creator-stat-label {
-	margin-top: 2px;
-	font-size: 10px;
+.habit-creator-headline {
+	margin: 0 0 6px;
+	font-size: 16px;
 	font-weight: 600;
-	letter-spacing: 0.08em;
-	color: var( --habit-creator-accent );
-}
-
-.habit-creator-body {
-	flex: 1;
-	min-width: 0;
-}
-
-.habit-creator-kicker {
-	margin: 0 0 2px;
-	font-size: 10px;
-	font-weight: 600;
-	letter-spacing: 0.08em;
-	color: #787c82;
-	text-transform: uppercase;
-	display: flex;
-	align-items: center;
-	gap: 6px;
-}
-
-.habit-creator-topic {
-	margin: 0 0 4px;
-	font-size: 17px;
-	font-weight: 600;
-	line-height: 1.25;
+	line-height: 1.4;
 	color: #1d2327;
 }
 
-.habit-creator-timing {
-	margin: 0 0 6px;
-	font-size: 12px;
+/*
+ * Visual match for @wordpress/components FormTokenField tokens
+ * (.components-form-token-field__token). Same compact rectangle the
+ * block editor uses for tag/category tokens, recreated locally so we
+ * don't have to pull in the full wp-components CSS bundle just for one
+ * pill. Reads as "this is a taxonomy term", consistent with the rest
+ * of the WordPress admin.
+ */
+.habit-creator-pill {
+	display: inline-block;
+	padding: 0 6px;
+	border-radius: 2px;
+	background: #f0f0f0;
+	color: #1e1e1e;
+	font-size: 0.95em;
+	font-weight: 400;
+	line-height: 1.5;
+	vertical-align: baseline;
+	white-space: nowrap;
+}
+
+.habit-creator-pill-prefix {
+	color: #757575;
+	margin-right: 1px;
+}
+
+.habit-creator-body {
+	margin: 0 0 12px;
+	font-size: 13px;
 	color: #50575e;
 }
 
-.habit-creator-encouragement {
-	margin: 0 0 6px;
+/*
+ * Vertical "streak track" — soft pill behind the icon column visually
+ * threads the past posts together as a single ongoing streak. The
+ * current (most-recent) post breaks out of the gray with a filled dark
+ * circle and the 🔥 — the streak's live edge.
+ */
+.habit-creator-streak {
+	position: relative;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.habit-creator-streak::before {
+	content: '';
+	position: absolute;
+	left: 4px;
+	top: 4px;
+	bottom: 4px;
+	width: 28px;
+	background: #f0f0f0;
+	border-radius: 999px;
+	z-index: 0;
+}
+
+.habit-creator-streak-row {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 4px 10px 4px 0;
+	margin-bottom: 0; /* override wp-admin/css/common.css `li, dd { margin-bottom: 6px }` */
+	min-width: 0;
+}
+
+.habit-creator-streak-icon {
+	flex: 0 0 28px;
+	width: 28px;
+	height: 28px;
+	margin-left: 4px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 999px;
+	color: #757575;
+}
+
+.habit-creator-streak-row.is-next .habit-creator-streak-icon {
+	background: #1e1e1e;
+	color: #fff;
+}
+
+.habit-creator-streak-row.is-next {
+	margin-top: 4px;
+}
+
+.habit-creator-streak-cta {
+	display: inline-flex;
+	align-items: center;
+}
+
+.habit-creator-streak-cta::before {
+	content: '·';
+	margin-right: 6px;
+	color: #c3c4c7;
+}
+
+.habit-creator-streak-text {
+	display: flex;
+	align-items: baseline;
+	gap: 12px;
+	min-width: 0;
+	flex: 1;
+}
+
+.habit-creator-streak-ago {
+	flex: 0 0 auto;
+	min-width: 80px;
 	font-size: 13px;
 	color: #1d2327;
 }
 
-.habit-creator-prior {
-	margin: 0 0 10px;
+.habit-creator-streak-title {
+	flex: 1;
+	min-width: 0;
 	font-size: 12px;
-	color: #787c82;
+	color: #2271b1;
+	text-decoration: underline;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
-.habit-creator-prior a {
-	color: var( --habit-creator-accent );
+.habit-creator-streak-title:hover,
+.habit-creator-streak-title:focus {
+	color: #135e96;
 }
 
-.habit-creator-actions {
-	margin: 0;
-}
-
-.habit-creator-ai-badge {
-	font-size: 9px;
-	font-weight: 600;
-	letter-spacing: 0.05em;
-	color: #fff;
-	background: var( --habit-creator-accent );
-	padding: 1px 5px;
-	border-radius: 3px;
+.habit-creator-streak-title::before {
+	content: '·';
+	margin-right: 6px;
+	color: #c3c4c7;
+	text-decoration: none;
 }
 
 .habit-creator-dismiss {
 	position: absolute;
-	top: 4px;
+	top: 0;
 	right: 0;
 	width: 22px;
 	height: 22px;
@@ -179,41 +233,23 @@
 	border-top: 1px solid #f0f0f1;
 }
 
-.habit-creator-compact-row {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	flex-wrap: wrap;
-}
-
-.habit-creator-streak-inline {
-	font-weight: 700;
-	color: var( --habit-creator-accent );
-	font-variant-numeric: tabular-nums;
-}
-
-.habit-creator-kicker-inline {
-	font-size: 10px;
-	font-weight: 600;
-	letter-spacing: 0.08em;
-	color: #787c82;
-}
-
-.habit-creator-topic-inline {
+.habit-creator-compact-headline {
+	margin: 0 0 2px;
+	font-size: 13px;
 	font-weight: 600;
 	color: #1d2327;
 }
 
 .habit-creator-compact-meta {
-	margin-top: 2px;
+	margin: 0;
 	font-size: 12px;
-	color: #50575e;
-}
-
-.habit-creator-timing-inline {
 	color: #787c82;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
 }
 
-.habit-creator-compact .habit-creator-create {
+.habit-creator-compact-meta .habit-creator-create {
 	margin-left: auto;
 }

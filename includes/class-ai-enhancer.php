@@ -2,14 +2,11 @@
 /**
  * Optional AI enhancement layer.
  *
- * Two narrowly-scoped touch-points only:
- *   1. The dashboard encouragement line — one short sentence in the widget UI.
- *      Never enters a post.
- *   2. A list of topic-specific *starter questions* offered as scaffolding
- *      inside a new draft. Questions, not prose. They prompt the writer to
- *      think; they don't write for them.
+ * One touch-point: a list of topic-specific *starter questions* offered as
+ * scaffolding inside a new draft. Questions, not prose — they prompt the
+ * writer to think; they don't write for them.
  *
- * Both are gated by:
+ * Gated by:
  *   (a) function_exists( 'wp_ai_client_prompt' )
  *   (b) at least one Connector with type === 'ai_provider'
  *   (c) the user setting habit_creator_use_ai
@@ -40,41 +37,6 @@ final class AI_Enhancer {
 			}
 		}
 		return false;
-	}
-
-	/**
-	 * Replace each pattern's encouragement with an AI-written one when available.
-	 *
-	 * @param array<int, array<string, mixed>> $patterns
-	 * @return array<int, array<string, mixed>>
-	 */
-	public static function enrich( array $patterns ): array {
-		foreach ( $patterns as &$pattern ) {
-			$nudge = self::generate_nudge( $pattern );
-			if ( $nudge !== null ) {
-				$pattern['encouragement'] = $nudge;
-				$pattern['ai_enhanced']   = true;
-			}
-		}
-		unset( $pattern );
-		return $patterns;
-	}
-
-	/**
-	 * @param array<string, mixed> $pattern
-	 */
-	private static function generate_nudge( array $pattern ): ?string {
-		$best       = $pattern['best_post'];
-		$year_count = count( $pattern['years'] );
-		$prompt     = sprintf(
-			'In one warm, encouraging sentence (under 25 words), nudge a blogger to write a follow-up post. They have written %1$d posts on the topic "%2$s" across %1$d different years. Their most recent on this topic was titled "%3$s" and received %4$d comments. No exclamation points. No flattery. Reference the streak or the readers, not the topic name.',
-			$year_count,
-			(string) $pattern['label'],
-			(string) $best['title'],
-			(int) $best['comments']
-		);
-
-		return self::run_prompt( $prompt );
 	}
 
 	/**
