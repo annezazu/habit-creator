@@ -13,7 +13,43 @@
 		} ).then( ( r ) => r.json() );
 	}
 
+	function postToggle( enabled ) {
+		const body = new URLSearchParams();
+		body.set( 'action', 'habit_creator_toggle_ai' );
+		body.set( '_wpnonce', HabitCreator.nonce );
+		body.set( 'enabled', enabled ? '1' : '0' );
+		return fetch( HabitCreator.ajaxUrl, {
+			method: 'POST',
+			credentials: 'same-origin',
+			body,
+		} ).then( ( r ) => r.json() );
+	}
+
 	document.addEventListener( 'click', function ( event ) {
+		// "Enhance with AI" toggle — switch via track button or its label.
+		const toggleLabel = event.target.closest( '.habit-creator-ai-toggle__label' );
+		const toggleBtn   = event.target.closest( '.habit-creator-ai-toggle__form-toggle' )
+			|| ( toggleLabel
+				? toggleLabel.parentElement.querySelector( '.habit-creator-ai-toggle__form-toggle' )
+				: null );
+		if ( toggleBtn ) {
+			event.preventDefault();
+			if ( toggleBtn.disabled ) {
+				return;
+			}
+			const next = toggleBtn.getAttribute( 'aria-checked' ) !== 'true';
+			toggleBtn.classList.toggle( 'is-checked', next );
+			toggleBtn.setAttribute( 'aria-checked', next ? 'true' : 'false' );
+			postToggle( next ).then( ( res ) => {
+				if ( ! res || ! res.success ) {
+					// Revert visual state if persistence failed.
+					toggleBtn.classList.toggle( 'is-checked', ! next );
+					toggleBtn.setAttribute( 'aria-checked', next ? 'false' : 'true' );
+				}
+			} );
+			return;
+		}
+
 		const expandBtn = event.target.closest( '.habit-creator-expand' );
 		if ( expandBtn ) {
 			event.preventDefault();
@@ -54,9 +90,9 @@
 		if ( event.target.closest( '.habit-creator-dismiss' ) ) {
 			event.preventDefault();
 			postForm( 'habit_creator_dismiss', key ).then( ( res ) => {
-				const root = card.closest( '.habit-creator' );
-				if ( root && res && res.success && res.data && typeof res.data.html === 'string' ) {
-					root.innerHTML = res.data.html;
+				const body = card.closest( '.habit-creator-body-wrap' );
+				if ( body && res && res.success && res.data && typeof res.data.html === 'string' ) {
+					body.innerHTML = res.data.html;
 					return;
 				}
 				const wrapper = card.closest( 'li' ) || card;
