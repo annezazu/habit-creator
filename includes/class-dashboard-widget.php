@@ -74,30 +74,22 @@ final class Dashboard_Widget {
 	/**
 	 * "Enhance with AI" toggle, mirroring @wordpress/components ToggleControl.
 	 *
-	 * Visible for users who can flip the underlying site option. Disabled
-	 * (with explanation) when no AI provider is registered via the 7.0
-	 * Connectors API, so the toggle reflects what's actually possible.
+	 * Only rendered when an `ai_provider` connector is registered via the
+	 * WP 7.0 Connectors API — no provider, no toggle. Keeps the widget
+	 * free of dead controls on installs that haven't connected an AI yet.
 	 */
 	private static function render_ai_toggle(): void {
 		if ( ! current_user_can( self::TOGGLE_CAP ) ) {
 			return;
 		}
-
-		$on               = Settings::ai_enabled();
-		$provider_present = function_exists( 'wp_get_connectors' )
-			&& (bool) array_filter(
-				(array) wp_get_connectors(),
-				static fn( $c ) => ( $c['type'] ?? '' ) === 'ai_provider'
-			);
-		$disabled         = ! $provider_present;
-		$effective_on     = $on && $provider_present;
-
-		$classes = [ 'components-form-toggle', 'habit-creator-ai-toggle__form-toggle' ];
-		if ( $effective_on ) {
-			$classes[] = 'is-checked';
+		if ( ! self::ai_provider_registered() ) {
+			return;
 		}
-		if ( $disabled ) {
-			$classes[] = 'is-disabled';
+
+		$on      = Settings::ai_enabled();
+		$classes = [ 'components-form-toggle', 'habit-creator-ai-toggle__form-toggle' ];
+		if ( $on ) {
+			$classes[] = 'is-checked';
 		}
 
 		?>
@@ -106,12 +98,8 @@ final class Dashboard_Widget {
 				type="button"
 				class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>"
 				role="switch"
-				aria-checked="<?php echo $effective_on ? 'true' : 'false'; ?>"
+				aria-checked="<?php echo $on ? 'true' : 'false'; ?>"
 				aria-labelledby="habit-creator-ai-toggle-label"
-				<?php if ( $disabled ) : ?>
-					aria-describedby="habit-creator-ai-toggle-help"
-					disabled
-				<?php endif; ?>
 			>
 				<span class="components-form-toggle__track" aria-hidden="true"></span>
 				<span class="components-form-toggle__thumb" aria-hidden="true"></span>
@@ -120,13 +108,20 @@ final class Dashboard_Widget {
 				id="habit-creator-ai-toggle-label"
 				class="habit-creator-ai-toggle__label"
 			><?php esc_html_e( 'Enhance with AI', 'habit-creator' ); ?></label>
-			<?php if ( $disabled ) : ?>
-				<span id="habit-creator-ai-toggle-help" class="habit-creator-ai-toggle__help">
-					<?php esc_html_e( 'Connect an AI provider to enable.', 'habit-creator' ); ?>
-				</span>
-			<?php endif; ?>
 		</div>
 		<?php
+	}
+
+	private static function ai_provider_registered(): bool {
+		if ( ! function_exists( 'wp_get_connectors' ) ) {
+			return false;
+		}
+		foreach ( (array) wp_get_connectors() as $connector ) {
+			if ( ( $connector['type'] ?? '' ) === 'ai_provider' ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static function render_inner( int $user_id, bool $is_mock ): string {

@@ -53,11 +53,6 @@
 	outline-offset: 2px;
 }
 
-.habit-creator-ai-toggle__form-toggle.is-disabled {
-	cursor: not-allowed;
-	opacity: 0.6;
-}
-
 .habit-creator-ai-toggle__form-toggle .components-form-toggle__track {
 	position: absolute;
 	inset: 0;
@@ -93,16 +88,6 @@
 	color: #1d2327;
 	cursor: pointer;
 	user-select: none;
-}
-
-.habit-creator-ai-toggle__form-toggle.is-disabled + .habit-creator-ai-toggle__label {
-	cursor: not-allowed;
-}
-
-.habit-creator-ai-toggle__help {
-	font-size: 12px;
-	color: #757575;
-	font-style: italic;
 }
 
 .habit-creator-intro {

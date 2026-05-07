@@ -34,9 +34,6 @@
 				: null );
 		if ( toggleBtn ) {
 			event.preventDefault();
-			if ( toggleBtn.disabled ) {
-				return;
-			}
 			const next = toggleBtn.getAttribute( 'aria-checked' ) !== 'true';
 			toggleBtn.classList.toggle( 'is-checked', next );
 			toggleBtn.setAttribute( 'aria-checked', next ? 'true' : 'false' );
