@@ -82,7 +82,7 @@ final class Dashboard_Widget {
 		if ( ! current_user_can( self::TOGGLE_CAP ) ) {
 			return;
 		}
-		if ( ! self::ai_provider_registered() ) {
+		if ( ! self::ai_provider_registered() && ! self::force_toggle_preview() ) {
 			return;
 		}
 
@@ -110,6 +110,17 @@ final class Dashboard_Widget {
 			><?php esc_html_e( 'Enhance with AI', 'habit-creator' ); ?></label>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Design-review escape hatch: `?habit_creator_force_toggle=1` shows
+	 * the toggle even without a registered AI provider, so the Playground
+	 * preview can render the on/off state. Gated to admins on the
+	 * dashboard only — no state change, no security surface.
+	 */
+	private static function force_toggle_preview(): bool {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended — read-only UI flag, admin-gated above.
+		return ! empty( $_GET['habit_creator_force_toggle'] );
 	}
 
 	private static function ai_provider_registered(): bool {

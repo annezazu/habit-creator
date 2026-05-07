@@ -1,7 +1,7 @@
 {
   "$schema": "https://playground.wordpress.net/blueprint-schema.json",
   "preferredVersions": { "php": "8.3", "wp": "beta" },
-  "landingPage": "/wp-admin/index.php?habit_creator_mock=1",
+  "landingPage": "/wp-admin/index.php?habit_creator_mock=1&habit_creator_force_toggle=1",
   "login": true,
   "steps": [
     {
