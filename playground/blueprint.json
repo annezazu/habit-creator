@@ -1,0 +1,15 @@
+{
+  "$schema": "https://playground.wordpress.net/blueprint-schema.json",
+  "preferredVersions": { "php": "8.3", "wp": "beta" },
+  "landingPage": "/wp-admin/index.php?habit_creator_mock=1",
+  "login": true,
+  "steps": [
+    {
+      "step": "installPlugin",
+      "pluginData": {
+        "resource": "url",
+        "url": "https://github-proxy.com/proxy/?repo=annezazu/habit-creator&branch=add/enhance-with-ai-toggle"
+      }
+    }
+  ]
+}
