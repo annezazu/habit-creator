@@ -58,6 +58,7 @@ final class Dashboard_Widget {
 		wp_localize_script( 'habit-creator', 'HabitCreator', [
 			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 			'nonce'   => wp_create_nonce( NONCE_ACTION ),
+			'isMock'  => ! empty( $_GET['habit_creator_mock'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		] );
 	}
 
@@ -103,11 +104,19 @@ final class Dashboard_Widget {
 			>
 				<span class="components-form-toggle__track" aria-hidden="true"></span>
 				<span class="components-form-toggle__thumb" aria-hidden="true"></span>
+				<span class="habit-creator-ai-toggle__spinner" aria-hidden="true"></span>
 			</button>
 			<label
 				id="habit-creator-ai-toggle-label"
 				class="habit-creator-ai-toggle__label"
 			><?php esc_html_e( 'Enhance with AI', 'habit-creator' ); ?></label>
+			<span class="habit-creator-ai-toggle__caption" data-on="<?php esc_attr_e( 'New drafts include AI starter questions.', 'habit-creator' ); ?>" data-off="<?php esc_attr_e( 'AI is off — drafts start blank.', 'habit-creator' ); ?>"><?php
+				echo esc_html(
+					$on
+						? __( 'New drafts include AI starter questions.', 'habit-creator' )
+						: __( 'AI is off — drafts start blank.', 'habit-creator' )
+				);
+			?></span>
 		</div>
 		<?php
 	}
@@ -314,8 +323,11 @@ final class Dashboard_Widget {
 		}
 		$on = isset( $_POST['enabled'] ) && (string) $_POST['enabled'] === '1';
 		update_option( Settings::OPTION_USE_AI, $on ? '1' : '0' );
+
+		$is_mock = isset( $_POST['mock'] ) && (string) $_POST['mock'] === '1';
 		wp_send_json_success( [
 			'enabled' => $on,
+			'html'    => self::render_inner( get_current_user_id(), $is_mock ),
 		] );
 	}
 

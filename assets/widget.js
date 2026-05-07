@@ -18,6 +18,9 @@
 		body.set( 'action', 'habit_creator_toggle_ai' );
 		body.set( '_wpnonce', HabitCreator.nonce );
 		body.set( 'enabled', enabled ? '1' : '0' );
+		if ( HabitCreator.isMock ) {
+			body.set( 'mock', '1' );
+		}
 		return fetch( HabitCreator.ajaxUrl, {
 			method: 'POST',
 			credentials: 'same-origin',
@@ -34,15 +37,40 @@
 				: null );
 		if ( toggleBtn ) {
 			event.preventDefault();
-			const next = toggleBtn.getAttribute( 'aria-checked' ) !== 'true';
+			const next     = toggleBtn.getAttribute( 'aria-checked' ) !== 'true';
+			const wrap     = toggleBtn.closest( '.habit-creator-ai-toggle' );
+			const caption  = wrap ? wrap.querySelector( '.habit-creator-ai-toggle__caption' ) : null;
+			const root     = toggleBtn.closest( '.habit-creator' );
+			const bodyWrap = root ? root.querySelector( '.habit-creator-body-wrap' ) : null;
+
+			// Optimistic flip.
 			toggleBtn.classList.toggle( 'is-checked', next );
 			toggleBtn.setAttribute( 'aria-checked', next ? 'true' : 'false' );
+			toggleBtn.classList.add( 'is-saving' );
+			if ( caption ) {
+				caption.textContent = next
+					? caption.dataset.on
+					: caption.dataset.off;
+			}
+
 			postToggle( next ).then( ( res ) => {
+				toggleBtn.classList.remove( 'is-saving' );
 				if ( ! res || ! res.success ) {
-					// Revert visual state if persistence failed.
+					// Revert on failure.
 					toggleBtn.classList.toggle( 'is-checked', ! next );
 					toggleBtn.setAttribute( 'aria-checked', next ? 'false' : 'true' );
+					if ( caption ) {
+						caption.textContent = next
+							? caption.dataset.off
+							: caption.dataset.on;
+					}
+					return;
 				}
+				if ( bodyWrap && res.data && typeof res.data.html === 'string' ) {
+					bodyWrap.innerHTML = res.data.html;
+				}
+			} ).catch( () => {
+				toggleBtn.classList.remove( 'is-saving' );
 			} );
 			return;
 		}
