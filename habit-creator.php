@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Habit Creator
  * Description: Spots recurring patterns in your blogging history (topics, tags, seasonal activities) and nudges you to write the next installment. Works without AI; uses the Connectors API when an AI provider is registered.
- * Version:     0.3.20
+ * Version:     0.4.7
  * Author:      Anne McCarthy
  * License:     GPL-2.0-or-later
  * Requires at least: 6.5
@@ -17,7 +17,7 @@ namespace HabitCreator;
 
 defined( 'ABSPATH' ) || exit;
 
-const VERSION       = '0.3.20';
+const VERSION       = '0.4.7';
 const CRON_HOOK     = 'habit_creator_detect_patterns';
 const TRANSIENT_KEY = 'habit_creator_patterns_v2_';
 const NONCE_ACTION  = 'habit_creator_action';
@@ -32,7 +32,6 @@ Settings::init();
 add_action( 'wp_dashboard_setup', [ Dashboard_Widget::class, 'register' ] );
 add_action( 'admin_enqueue_scripts', [ Dashboard_Widget::class, 'enqueue_assets' ] );
 add_action( 'wp_ajax_habit_creator_create_draft', [ Draft_Creator::class, 'handle_ajax' ] );
-add_action( 'wp_ajax_habit_creator_dismiss', [ Dashboard_Widget::class, 'handle_dismiss' ] );
 add_action( CRON_HOOK, [ Pattern_Detector::class, 'run_for_all_authors' ] );
 
 register_activation_hook( __FILE__, static function (): void {

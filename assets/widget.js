@@ -13,27 +13,26 @@
 		} ).then( ( r ) => r.json() );
 	}
 
+	function rotateSlide( stack ) {
+		const slides = Array.from( stack.querySelectorAll( '.habit-creator-slide' ) );
+		if ( slides.length < 2 ) return;
+		const currentIndex = slides.findIndex( ( s ) => ! s.hasAttribute( 'hidden' ) );
+		const nextIndex = ( currentIndex + 1 ) % slides.length;
+		slides[ currentIndex ].setAttribute( 'hidden', '' );
+		slides[ nextIndex ].removeAttribute( 'hidden' );
+	}
+
 	document.addEventListener( 'click', function ( event ) {
-		const expandBtn = event.target.closest( '.habit-creator-expand' );
-		if ( expandBtn ) {
+		const suggest = event.target.closest( '.habit-creator-suggest' );
+		if ( suggest ) {
 			event.preventDefault();
-			const list = expandBtn.parentElement.querySelector( '.habit-creator-list' );
-			if ( ! list ) return;
-			const open = ! list.hasAttribute( 'hidden' );
-			if ( open ) {
-				list.setAttribute( 'hidden', '' );
-				expandBtn.setAttribute( 'aria-expanded', 'false' );
-			} else {
-				list.removeAttribute( 'hidden' );
-				expandBtn.setAttribute( 'aria-expanded', 'true' );
-			}
+			const stack = suggest.closest( '.habit-creator-stack' );
+			if ( stack ) rotateSlide( stack );
 			return;
 		}
 
 		const card = event.target.closest( '.habit-creator-card' );
-		if ( ! card ) {
-			return;
-		}
+		if ( ! card ) return;
 		const key = card.dataset.patternKey;
 
 		if ( event.target.closest( '.habit-creator-create' ) ) {
@@ -47,20 +46,6 @@
 					btn.disabled = false;
 					alert( ( res && res.data && res.data.message ) || 'Could not create draft.' );
 				}
-			} );
-			return;
-		}
-
-		if ( event.target.closest( '.habit-creator-dismiss' ) ) {
-			event.preventDefault();
-			postForm( 'habit_creator_dismiss', key ).then( ( res ) => {
-				const root = card.closest( '.habit-creator' );
-				if ( root && res && res.success && res.data && typeof res.data.html === 'string' ) {
-					root.innerHTML = res.data.html;
-					return;
-				}
-				const wrapper = card.closest( 'li' ) || card;
-				wrapper.remove();
 			} );
 		}
 	} );
