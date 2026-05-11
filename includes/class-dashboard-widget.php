@@ -180,12 +180,15 @@ final class Dashboard_Widget {
 	private static function render_empty_state(): void {
 		?>
 		<div class="habit-creator-empty-card">
+			<p class="habit-creator-empty-lead">
+				<strong><?php esc_html_e( 'Surfaces streaks to help create a blogging habit.', 'habit-creator' ); ?></strong>
+			</p>
 			<p class="habit-creator-empty">
-				<?php esc_html_e( 'Streaks from your archive will display once you create more posts. Surfaces and encourages a blogging habit.', 'habit-creator' ); ?>
+				<?php esc_html_e( 'Suggestions will appear once more posts have been created.', 'habit-creator' ); ?>
 			</p>
 			<p class="habit-creator-empty-actions">
-				<a class="button button-primary" href="<?php echo esc_url( admin_url( 'post-new.php' ) ); ?>">
-					<?php esc_html_e( 'Create a post', 'habit-creator' ); ?>
+				<a class="button button-primary button-small" href="<?php echo esc_url( admin_url( 'post-new.php' ) ); ?>">
+					<?php esc_html_e( 'Create post', 'habit-creator' ); ?>
 				</a>
 			</p>
 		</div>
