@@ -108,19 +108,22 @@ final class Dashboard_Widget {
 						$permalink = (string) get_permalink( (int) $post['id'] );
 						?>
 						<li class="habit-creator-streak-row is-done">
-							<span class="habit-creator-streak-icon"><?php echo self::check_icon_svg(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — trusted markup ?></span>
-							<span class="habit-creator-streak-text">
+							<span class="habit-creator-streak-line">
+								<span class="habit-creator-streak-icon"><?php echo self::check_icon_svg(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — trusted markup ?></span>
 								<span class="habit-creator-streak-ago"><?php echo esc_html( ucfirst( $ago ) ); ?></span>
 								<a class="habit-creator-streak-title" href="<?php echo esc_url( $permalink ); ?>"><?php echo esc_html( (string) $post['title'] ); ?></a>
 							</span>
+							<?php if ( ! empty( $post['excerpt'] ) ) : ?>
+								<span class="habit-creator-streak-excerpt"><?php echo esc_html( (string) $post['excerpt'] ); ?></span>
+							<?php endif; ?>
 						</li>
 					<?php endforeach; ?>
 					<li class="habit-creator-streak-row is-next">
-						<span class="habit-creator-streak-icon"><?php echo self::flame_icon_svg(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — trusted markup ?></span>
-						<span class="habit-creator-streak-text">
+						<span class="habit-creator-streak-line">
+							<span class="habit-creator-streak-icon"><?php echo self::flame_icon_svg(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — trusted markup ?></span>
 							<span class="habit-creator-streak-ago"><?php echo esc_html( ucfirst( (string) $pattern['timing'] ) ); ?></span>
 							<span class="habit-creator-streak-cta">
-								<button type="button" class="button button-primary button-small habit-creator-create"><?php
+								<button type="button" class="button button-primary habit-creator-create"><?php
 									esc_html_e( 'Create a post', 'habit-creator' );
 								?></button>
 								<?php if ( $total > 1 ) : ?>
