@@ -6,6 +6,9 @@
 		body.set( 'action', action );
 		body.set( '_wpnonce', HabitCreator.nonce );
 		body.set( 'pattern_key', patternKey );
+		if ( new URLSearchParams( window.location.search ).has( 'habit_creator_mock' ) ) {
+			body.set( 'is_mock', '1' );
+		}
 		return fetch( HabitCreator.ajaxUrl, {
 			method: 'POST',
 			credentials: 'same-origin',

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Habit Creator
  * Description: Spots recurring patterns in your blogging history (topics, tags, seasonal activities) and nudges you to write the next installment. Works without AI; uses the Connectors API when an AI provider is registered.
- * Version:     0.4.31
+ * Version:     0.4.37
  * Author:      Anne McCarthy
  * License:     GPL-2.0-or-later
  * Requires at least: 6.5
@@ -17,7 +17,7 @@ namespace HabitCreator;
 
 defined( 'ABSPATH' ) || exit;
 
-const VERSION       = '0.4.31';
+const VERSION       = '0.4.37';
 const CRON_HOOK     = 'habit_creator_detect_patterns';
 const TRANSIENT_KEY = 'habit_creator_patterns_v2_';
 const NONCE_ACTION  = 'habit_creator_action';
