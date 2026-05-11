@@ -32,6 +32,7 @@ Settings::init();
 add_action( 'wp_dashboard_setup', [ Dashboard_Widget::class, 'register' ] );
 add_action( 'admin_enqueue_scripts', [ Dashboard_Widget::class, 'enqueue_assets' ] );
 add_action( 'wp_ajax_habit_creator_create_draft', [ Draft_Creator::class, 'handle_ajax' ] );
+add_action( 'wp_ajax_habit_creator_toggle_ai', [ Dashboard_Widget::class, 'handle_toggle_ai' ] );
 add_action( CRON_HOOK, [ Pattern_Detector::class, 'run_for_all_authors' ] );
 
 register_activation_hook( __FILE__, static function (): void {

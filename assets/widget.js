@@ -16,6 +16,21 @@
 		} ).then( ( r ) => r.json() );
 	}
 
+	function postToggle( enabled ) {
+		const body = new URLSearchParams();
+		body.set( 'action', 'habit_creator_toggle_ai' );
+		body.set( '_wpnonce', HabitCreator.nonce );
+		body.set( 'enabled', enabled ? '1' : '0' );
+		if ( HabitCreator.isMock ) {
+			body.set( 'mock', '1' );
+		}
+		return fetch( HabitCreator.ajaxUrl, {
+			method: 'POST',
+			credentials: 'same-origin',
+			body,
+		} ).then( ( r ) => r.json() );
+	}
+
 	function rotateSlide( stack ) {
 		const slides = Array.from( stack.querySelectorAll( '.habit-creator-slide' ) );
 		if ( slides.length < 2 ) return;
@@ -26,6 +41,52 @@
 	}
 
 	document.addEventListener( 'click', function ( event ) {
+		// "Enhance with AI" toggle — switch via track button or its label.
+		const toggleLabel = event.target.closest( '.habit-creator-ai-toggle__label' );
+		const toggleBtn   = event.target.closest( '.habit-creator-ai-toggle__form-toggle' )
+			|| ( toggleLabel
+				? toggleLabel.parentElement.querySelector( '.habit-creator-ai-toggle__form-toggle' )
+				: null );
+		if ( toggleBtn ) {
+			event.preventDefault();
+			const next     = toggleBtn.getAttribute( 'aria-checked' ) !== 'true';
+			const wrap     = toggleBtn.closest( '.habit-creator-ai-toggle' );
+			const caption  = wrap ? wrap.querySelector( '.habit-creator-ai-toggle__caption' ) : null;
+			const root     = toggleBtn.closest( '.habit-creator' );
+			const bodyWrap = root ? root.querySelector( '.habit-creator-body-wrap' ) : null;
+
+			// Optimistic flip.
+			toggleBtn.classList.toggle( 'is-checked', next );
+			toggleBtn.setAttribute( 'aria-checked', next ? 'true' : 'false' );
+			toggleBtn.classList.add( 'is-saving' );
+			if ( caption ) {
+				caption.textContent = next
+					? caption.dataset.on
+					: caption.dataset.off;
+			}
+
+			postToggle( next ).then( ( res ) => {
+				toggleBtn.classList.remove( 'is-saving' );
+				if ( ! res || ! res.success ) {
+					// Revert on failure.
+					toggleBtn.classList.toggle( 'is-checked', ! next );
+					toggleBtn.setAttribute( 'aria-checked', next ? 'false' : 'true' );
+					if ( caption ) {
+						caption.textContent = next
+							? caption.dataset.off
+							: caption.dataset.on;
+					}
+					return;
+				}
+				if ( bodyWrap && res.data && typeof res.data.html === 'string' ) {
+					bodyWrap.innerHTML = res.data.html;
+				}
+			} ).catch( () => {
+				toggleBtn.classList.remove( 'is-saving' );
+			} );
+			return;
+		}
+
 		const suggest = event.target.closest( '.habit-creator-suggest' );
 		if ( suggest ) {
 			event.preventDefault();

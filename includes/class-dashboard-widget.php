@@ -19,6 +19,12 @@ defined( 'ABSPATH' ) || exit;
 
 final class Dashboard_Widget {
 
+	/**
+	 * Capability required to flip the "Enhance with AI" toggle. Matches
+	 * the capability needed to update the underlying site option.
+	 */
+	private const TOGGLE_CAP = 'manage_options';
+
 	public static function register(): void {
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return;
@@ -50,14 +56,90 @@ final class Dashboard_Widget {
 		wp_localize_script( 'habit-creator', 'HabitCreator', [
 			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 			'nonce'   => wp_create_nonce( NONCE_ACTION ),
+			'isMock'  => ! empty( $_GET['habit_creator_mock'] ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		] );
 	}
 
 	public static function render(): void {
 		$is_mock = ! empty( $_GET['habit_creator_mock'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		echo '<div class="habit-creator">';
+		self::render_ai_toggle();
+		echo '<div class="habit-creator-body-wrap">';
 		echo self::render_inner( get_current_user_id(), $is_mock ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — trusted markup assembled in render_inner
 		echo '</div>';
+		echo '</div>';
+	}
+
+	/**
+	 * "Enhance with AI" toggle, mirroring @wordpress/components ToggleControl.
+	 *
+	 * Only rendered when an `ai_provider` connector is registered via the
+	 * WP 7.0 Connectors API — no provider, no toggle. Keeps the widget
+	 * free of dead controls on installs that haven't connected an AI yet.
+	 */
+	private static function render_ai_toggle(): void {
+		if ( ! current_user_can( self::TOGGLE_CAP ) ) {
+			return;
+		}
+		if ( ! self::ai_provider_registered() && ! self::force_toggle_preview() ) {
+			return;
+		}
+
+		$on      = Settings::ai_enabled();
+		$classes = [ 'components-form-toggle', 'habit-creator-ai-toggle__form-toggle' ];
+		if ( $on ) {
+			$classes[] = 'is-checked';
+		}
+
+		?>
+		<div class="habit-creator-ai-toggle">
+			<button
+				type="button"
+				class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>"
+				role="switch"
+				aria-checked="<?php echo $on ? 'true' : 'false'; ?>"
+				aria-labelledby="habit-creator-ai-toggle-label"
+			>
+				<span class="components-form-toggle__track" aria-hidden="true"></span>
+				<span class="components-form-toggle__thumb" aria-hidden="true"></span>
+				<span class="habit-creator-ai-toggle__spinner" aria-hidden="true"></span>
+			</button>
+			<label
+				id="habit-creator-ai-toggle-label"
+				class="habit-creator-ai-toggle__label"
+			><?php esc_html_e( 'Enhance with AI', 'habit-creator' ); ?></label>
+			<span class="habit-creator-ai-toggle__caption" data-on="<?php esc_attr_e( 'New drafts include AI starter questions.', 'habit-creator' ); ?>" data-off="<?php esc_attr_e( 'AI is off — drafts start blank.', 'habit-creator' ); ?>"><?php
+				echo esc_html(
+					$on
+						? __( 'New drafts include AI starter questions.', 'habit-creator' )
+						: __( 'AI is off — drafts start blank.', 'habit-creator' )
+				);
+			?></span>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Design-review escape hatch: `?habit_creator_force_toggle=1` shows
+	 * the toggle even without a registered AI provider, so the Playground
+	 * preview can render the on/off state. Gated to admins on the
+	 * dashboard only — no state change, no security surface.
+	 */
+	private static function force_toggle_preview(): bool {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended — read-only UI flag, admin-gated above.
+		return ! empty( $_GET['habit_creator_force_toggle'] );
+	}
+
+	private static function ai_provider_registered(): bool {
+		if ( ! function_exists( 'wp_get_connectors' ) ) {
+			return false;
+		}
+		foreach ( (array) wp_get_connectors() as $connector ) {
+			if ( ( $connector['type'] ?? '' ) === 'ai_provider' ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static function render_inner( int $user_id, bool $is_mock ): string {
@@ -198,4 +280,18 @@ final class Dashboard_Widget {
 		);
 	}
 
+	public static function handle_toggle_ai(): void {
+		check_ajax_referer( NONCE_ACTION );
+		if ( ! current_user_can( self::TOGGLE_CAP ) ) {
+			wp_send_json_error( [], 403 );
+		}
+		$on = isset( $_POST['enabled'] ) && (string) $_POST['enabled'] === '1';
+		update_option( Settings::OPTION_USE_AI, $on ? '1' : '0' );
+
+		$is_mock = isset( $_POST['mock'] ) && (string) $_POST['mock'] === '1';
+		wp_send_json_success( [
+			'enabled' => $on,
+			'html'    => self::render_inner( get_current_user_id(), $is_mock ),
+		] );
+	}
 }
