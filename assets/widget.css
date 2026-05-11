@@ -173,13 +173,13 @@
 .habit-creator-streak-text {
 	display: flex;
 	align-items: baseline;
-	gap: 12px;
+	gap: 6px;
 	min-width: 0;
 	flex: 1;
 }
 
 .habit-creator-streak-ago {
-	flex: 0 0 100px;
+	flex: 0 0 85px;
 	font-size: 13px;
 	color: #1d2327;
 }
