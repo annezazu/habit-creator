@@ -200,7 +200,7 @@ final class Dashboard_Widget {
 				<?php esc_html_e( 'Suggestions will appear once more posts have been created.', 'habit-creator' ); ?>
 			</p>
 			<p class="habit-creator-empty-actions">
-				<a class="button button-primary button-small" href="<?php echo esc_url( admin_url( 'post-new.php' ) ); ?>">
+				<a class="button button-primary" href="<?php echo esc_url( admin_url( 'post-new.php' ) ); ?>">
 					<?php esc_html_e( 'Create post', 'habit-creator' ); ?>
 				</a>
 			</p>
