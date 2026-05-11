@@ -161,9 +161,23 @@
 	font-style: italic;
 }
 
+.habit-creator-empty-lead {
+	margin: 0 0 6px;
+	color: #1d2327;
+}
+
 .habit-creator-empty {
-	margin: 0;
+	margin: 0 0 14px;
 	color: #50575e;
+}
+
+.habit-creator-empty-card {
+	padding: 13px 11px;
+	text-align: center;
+}
+
+.habit-creator-empty-actions {
+	margin: 0;
 }
 
 .habit-creator-card {

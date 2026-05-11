@@ -61,11 +61,12 @@ final class Dashboard_Widget {
 	}
 
 	public static function render(): void {
-		$is_mock = ! empty( $_GET['habit_creator_mock'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$is_mock  = ! empty( $_GET['habit_creator_mock'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$is_empty = ! empty( $_GET['habit_creator_empty'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		echo '<div class="habit-creator">';
 		self::render_ai_toggle();
 		echo '<div class="habit-creator-body-wrap">';
-		echo self::render_inner( get_current_user_id(), $is_mock ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — trusted markup assembled in render_inner
+		echo self::render_inner( get_current_user_id(), $is_mock, $is_empty ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — trusted markup assembled in render_inner
 		echo '</div>';
 		echo '</div>';
 	}
@@ -142,18 +143,23 @@ final class Dashboard_Widget {
 		return false;
 	}
 
-	private static function render_inner( int $user_id, bool $is_mock ): string {
-		$patterns = $is_mock
-			? Pattern_Detector::mock_patterns_for_user( $user_id )
-			: Pattern_Detector::patterns_for_user( $user_id );
+	private static function render_inner( int $user_id, bool $is_mock, bool $is_empty = false ): string {
+		if ( $is_empty ) {
+			$patterns = [];
+		} else {
+			$patterns = $is_mock
+				? Pattern_Detector::mock_patterns_for_user( $user_id )
+				: Pattern_Detector::patterns_for_user( $user_id );
+		}
 
 		ob_start();
-		echo '<p class="habit-creator-intro">' . esc_html__( 'Streaks from your archive — keep the habits going.', 'habit-creator' ) . '</p>';
 
 		if ( ! $patterns ) {
-			echo '<p class="habit-creator-empty">' . esc_html__( 'No live streaks right now. As you build a recurring archive, Habit Creator will surface the rhythms it spots.', 'habit-creator' ) . '</p>';
+			self::render_empty_state();
 			return (string) ob_get_clean();
 		}
+
+		echo '<p class="habit-creator-intro">' . esc_html__( 'Streaks from your archive — keep the habits going.', 'habit-creator' ) . '</p>';
 
 		$total = count( $patterns );
 		echo '<div class="habit-creator-stack">';
@@ -163,6 +169,30 @@ final class Dashboard_Widget {
 		echo '</div>';
 
 		return (string) ob_get_clean();
+	}
+
+	/**
+	 * Empty state — the user hasn't built up enough archive yet for the
+	 * detector to find anything live. Short pitch + a single CTA pointing
+	 * at the new-post screen. Triggerable for design with
+	 * ?habit_creator_empty=1.
+	 */
+	private static function render_empty_state(): void {
+		?>
+		<div class="habit-creator-empty-card">
+			<p class="habit-creator-empty-lead">
+				<strong><?php esc_html_e( 'Surfaces streaks to help create a blogging habit.', 'habit-creator' ); ?></strong>
+			</p>
+			<p class="habit-creator-empty">
+				<?php esc_html_e( 'Suggestions will appear once more posts have been created.', 'habit-creator' ); ?>
+			</p>
+			<p class="habit-creator-empty-actions">
+				<a class="button button-primary button-small" href="<?php echo esc_url( admin_url( 'post-new.php' ) ); ?>">
+					<?php esc_html_e( 'Create post', 'habit-creator' ); ?>
+				</a>
+			</p>
+		</div>
+		<?php
 	}
 
 	/**
