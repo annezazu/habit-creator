@@ -159,8 +159,6 @@ final class Dashboard_Widget {
 			return (string) ob_get_clean();
 		}
 
-		echo '<p class="habit-creator-intro">' . esc_html__( 'Streaks from your archive — keep the habits going.', 'habit-creator' ) . '</p>';
-
 		$total = count( $patterns );
 		echo '<div class="habit-creator-stack">';
 		foreach ( $patterns as $i => $pattern ) {
