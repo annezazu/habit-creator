@@ -99,6 +99,7 @@ final class Pattern_Detector {
 			$out[] = [
 				'id'           => (int) $post->ID,
 				'title'        => (string) $post->post_title,
+				'excerpt'      => self::short_excerpt( (string) $post->post_content ),
 				'timestamp'    => $ts,
 				'comments'     => (int) $post->comment_count,
 				'day_index'    => self::day_index( $ts ),
@@ -111,6 +112,31 @@ final class Pattern_Detector {
 			];
 		}
 
+		return $out;
+	}
+
+	/**
+	 * First ~12 words of the post body, stripped of HTML and shortcodes,
+	 * with an ellipsis if truncated. Used in the streak rows as a memory
+	 * aid for what the post was about.
+	 */
+	private static function short_excerpt( string $content ): string {
+		$plain = trim( wp_strip_all_tags( strip_shortcodes( $content ) ) );
+		if ( $plain === '' ) {
+			return '';
+		}
+		$words = array_values( array_filter(
+			preg_split( '/\s+/', $plain ) ?: [],
+			static fn( $w ) => $w !== ''
+		) );
+		if ( ! $words ) {
+			return '';
+		}
+		$slice = array_slice( $words, 0, 12 );
+		$out   = implode( ' ', $slice );
+		if ( count( $words ) > 12 ) {
+			$out .= '…';
+		}
 		return $out;
 	}
 

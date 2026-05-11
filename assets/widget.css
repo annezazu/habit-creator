@@ -171,9 +171,7 @@
 }
 
 .habit-creator-card.is-hero {
-	padding: 4px 28px 14px 0;
-	border-bottom: 1px solid #e5e5e5;
-	margin-bottom: 12px;
+	padding: 4px 0 4px 0;
 }
 
 .habit-creator-headline {
@@ -219,14 +217,14 @@
 /*
  * Vertical "streak track" — soft pill behind the icon column visually
  * threads the past posts together as a single ongoing streak. The
- * current (most-recent) post breaks out of the gray with a filled dark
- * circle and the 🔥 — the streak's live edge.
+ * current (most-recent) post breaks out of the gray with a filled
+ * accent-color circle and the 🔥 — the streak's live edge.
  */
 .habit-creator-streak {
 	position: relative;
 	list-style: none;
 	margin: 0;
-	padding: 0;
+	padding: 4px 0 0;
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
@@ -239,7 +237,7 @@
 	top: 4px;
 	bottom: 4px;
 	width: 28px;
-	background: #f0f0f0;
+	background: color-mix( in srgb, var( --wp-admin-theme-color, #2271b1 ) 6%, #fff );
 	border-radius: 999px;
 	z-index: 0;
 }
@@ -248,8 +246,7 @@
 	position: relative;
 	z-index: 1;
 	display: flex;
-	align-items: center;
-	gap: 10px;
+	flex-direction: column;
 	padding: 4px 10px 4px 0;
 	margin-bottom: 0; /* override wp-admin/css/common.css `li, dd { margin-bottom: 6px }` */
 	min-width: 0;
@@ -264,11 +261,11 @@
 	align-items: center;
 	justify-content: center;
 	border-radius: 999px;
-	color: #757575;
+	color: var( --habit-creator-accent );
 }
 
 .habit-creator-streak-row.is-next .habit-creator-streak-icon {
-	background: #1e1e1e;
+	background: var( --habit-creator-accent );
 	color: #fff;
 }
 
@@ -279,35 +276,65 @@
 .habit-creator-streak-cta {
 	display: inline-flex;
 	align-items: center;
-}
-
-.habit-creator-streak-cta::before {
-	content: '·';
-	margin-right: 6px;
-	color: #c3c4c7;
-}
-
-.habit-creator-streak-text {
-	display: flex;
-	align-items: baseline;
 	gap: 12px;
+}
+
+/*
+ * Secondary link-styled "Suggest another" button: accent-colored,
+ * no chrome, underline appears on hover/focus. Mirrors the Draft
+ * Sweeper "Not today" pattern. Primary "Create a post" CTA uses the
+ * standard WP .button.button-primary alongside it.
+ */
+.habit-creator-suggest {
+	background: none;
+	border: 0;
+	padding: 0;
+	margin: 0;
+	box-shadow: none;
+	cursor: pointer;
+	font: inherit;
+	color: var( --habit-creator-accent );
+	text-decoration: none;
+}
+
+.habit-creator-suggest:hover,
+.habit-creator-suggest:focus {
+	text-decoration: underline;
+	background: transparent;
+	color: var( --habit-creator-accent );
+}
+
+.habit-creator-streak-line {
+	display: flex;
+	align-items: center;
+	gap: 6px;
 	min-width: 0;
-	flex: 1;
+}
+
+.habit-creator-streak-excerpt {
+	margin-top: -6px;
+	padding-left: 137px; /* icon-margin (4) + icon-width (28) + gap (6) + ago-margin (8) + date-width (85) + gap (6) — aligns with title start */
+	font-size: 12px;
+	line-height: 1.3;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .habit-creator-streak-ago {
-	flex: 0 0 auto;
-	min-width: 80px;
+	flex: 0 0 85px;
+	margin-left: 8px;
 	font-size: 13px;
 	color: #1d2327;
 }
 
 .habit-creator-streak-title {
-	flex: 1;
+	flex: 0 1 auto;
 	min-width: 0;
-	font-size: 12px;
+	max-width: 100%;
+	font-size: 13px;
 	color: #2271b1;
-	text-decoration: underline;
+	text-decoration: none;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -315,80 +342,5 @@
 
 .habit-creator-streak-title:hover,
 .habit-creator-streak-title:focus {
-	color: #135e96;
-}
-
-.habit-creator-streak-title::before {
-	content: '·';
-	margin-right: 6px;
-	color: #c3c4c7;
-	text-decoration: none;
-}
-
-.habit-creator-dismiss {
-	position: absolute;
-	top: 0;
-	right: 0;
-	width: 22px;
-	height: 22px;
-	padding: 0;
-	border: 0;
-	background: transparent;
-	color: #a7aaad;
-	font-size: 18px;
-	line-height: 1;
-	cursor: pointer;
-	border-radius: 3px;
-}
-
-.habit-creator-dismiss:hover {
-	color: #1d2327;
-	background: #f0f0f1;
-}
-
-.habit-creator-expand {
-	margin: 4px 0;
-	padding: 4px 0;
-	border: 0;
-	background: transparent;
-	color: var( --habit-creator-accent );
-	font-size: 12px;
-	cursor: pointer;
-}
-
-.habit-creator-expand:hover {
-	text-decoration: underline;
-	filter: brightness( 0.85 );
-}
-
-.habit-creator-list {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-}
-
-.habit-creator-card.is-compact {
-	padding: 8px 28px 8px 0;
-	border-top: 1px solid #f0f0f1;
-}
-
-.habit-creator-compact-headline {
-	margin: 0 0 2px;
-	font-size: 13px;
-	font-weight: 600;
-	color: #1d2327;
-}
-
-.habit-creator-compact-meta {
-	margin: 0;
-	font-size: 12px;
-	color: #787c82;
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	flex-wrap: wrap;
-}
-
-.habit-creator-compact-meta .habit-creator-create {
-	margin-left: auto;
+	color: #4f94d4;
 }

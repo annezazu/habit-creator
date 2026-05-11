@@ -1,8 +1,8 @@
 <?php
 /**
- * Creates a pre-populated draft for a recurring pattern. The draft is a
- * *scaffold*: a few starter questions and a backlink to the previous post.
- * Habit Creator never writes the post body for the user.
+ * Creates a fresh, empty draft for a recurring pattern. The only
+ * pre-populated bit is the pattern's primary tag or category — no
+ * title, no body, no carry-over from prior posts.
  *
  * @package HabitCreator
  */
@@ -28,7 +28,10 @@ final class Draft_Creator {
 		}
 
 		$user_id  = get_current_user_id();
-		$patterns = Pattern_Detector::patterns_for_user( $user_id );
+		$is_mock  = ! empty( $_POST['is_mock'] );
+		$patterns = $is_mock
+			? Pattern_Detector::mock_patterns_for_user( $user_id )
+			: Pattern_Detector::patterns_for_user( $user_id );
 		$pattern  = null;
 		foreach ( $patterns as $candidate ) {
 			if ( $candidate['key'] === $pattern_key ) {
@@ -56,91 +59,63 @@ final class Draft_Creator {
 	 * @return int|\WP_Error
 	 */
 	private static function insert_draft( array $pattern, int $user_id ) {
-		$best  = $pattern['best_post'];
-		$year  = (int) gmdate( 'Y' );
-		$title = sprintf( '%s — %d', (string) $best['title'], $year );
-
-		$ai_prompts = null;
-		if ( class_exists( __NAMESPACE__ . '\\AI_Enhancer' ) ) {
-			$ai_prompts = AI_Enhancer::generate_writing_prompts( $pattern );
-		}
-		$used_ai   = $ai_prompts !== null;
-		$questions = $used_ai ? $ai_prompts : self::default_questions( $pattern );
-
-		$content = self::build_content( $pattern, $questions, $used_ai );
-
 		$args = [
-			'post_status'  => 'draft',
+			// auto-draft is WP's canonical "new empty post" status — the
+			// same one that /wp-admin/post-new.php creates. The block
+			// editor auto-converts to 'draft' the moment the user types.
+			'post_status'  => 'auto-draft',
 			'post_author'  => $user_id,
-			'post_title'   => $title,
-			'post_content' => $content,
+			'post_title'   => '',
+			'post_content' => '',
 			'post_type'    => 'post',
 			'meta_input'   => [
-				'_habit_creator_source_post' => (int) $best['id'],
 				'_habit_creator_pattern_key' => (string) $pattern['key'],
-				'_habit_creator_used_ai'     => $used_ai ? '1' : '0',
 			],
 		];
 
-		$tags = array_column( (array) $best['tags'], 'id' );
-		if ( $tags ) {
-			$args['tags_input'] = $tags;
-		}
-		$cats = array_column( (array) $best['cats'], 'id' );
-		if ( $cats ) {
-			$args['post_category'] = $cats;
-		}
+		self::apply_primary_taxonomy( $args, $pattern );
 
-		return wp_insert_post( $args, true );
+		// wp_insert_post rejects posts with empty title/content/excerpt
+		// via the `wp_insert_post_empty_content` filter regardless of
+		// status. Suppress it for just this insertion — we genuinely want
+		// a blank canvas with only a tag/category preset.
+		add_filter( 'wp_insert_post_empty_content', '__return_false' );
+		$post_id = wp_insert_post( $args, true );
+		remove_filter( 'wp_insert_post_empty_content', '__return_false' );
+
+		return $post_id;
 	}
 
 	/**
-	 * Generic, deterministic starter questions used when AI is unavailable
-	 * or disabled. Topic-agnostic on purpose.
+	 * Assigns only the pattern's *primary* taxonomy term to the new draft
+	 * (the tag or category that defined the streak) — not every tag the
+	 * source post happened to carry. Phrase patterns don't map to a
+	 * taxonomy, so they're a no-op here.
 	 *
+	 * @param array<string, mixed> $args     wp_insert_post args, mutated in place.
 	 * @param array<string, mixed> $pattern
-	 * @return array<int, string>
 	 */
-	private static function default_questions( array $pattern ): array {
-		return [
-			__( 'What\'s changed since the last time you wrote about this?', 'habit-creator' ),
-			__( 'Did anything you tried last year not work the way you expected?', 'habit-creator' ),
-			__( 'What\'s new this year that wasn\'t on your radar before?', 'habit-creator' ),
-			__( 'Who would benefit most from reading the updated version?', 'habit-creator' ),
-		];
-	}
-
-	/**
-	 * @param array<string, mixed> $pattern
-	 * @param array<int, string>   $questions
-	 */
-	private static function build_content( array $pattern, array $questions, bool $used_ai ): string {
-		$best       = $pattern['best_post'];
-		$prior_url  = (string) get_permalink( (int) $best['id'] );
-		$prior_html = sprintf(
-			/* translators: 1: previous post URL, 2: previous post title */
-			__( 'Continuing from last year\'s post: <a href="%1$s">%2$s</a>.', 'habit-creator' ),
-			esc_url( $prior_url ),
-			esc_html( (string) $best['title'] )
-		);
-
-		$intro = $used_ai
-			? __( 'Starter questions, suggested by your AI provider. Edit or delete any that don\'t fit — then write in your own voice below.', 'habit-creator' )
-			: __( 'A few starter questions to help you get going. Edit or delete any that don\'t fit — then write in your own voice below.', 'habit-creator' );
-
-		$out  = "<!-- wp:paragraph -->\n<p>" . $prior_html . "</p>\n<!-- /wp:paragraph -->\n\n";
-		$out .= "<!-- wp:heading {\"level\":2} -->\n<h2>" . esc_html__( 'A few things to think about', 'habit-creator' ) . "</h2>\n<!-- /wp:heading -->\n\n";
-		$out .= "<!-- wp:paragraph -->\n<p><em>" . esc_html( $intro ) . "</em></p>\n<!-- /wp:paragraph -->\n\n";
-
-		$list_items = '';
-		foreach ( $questions as $q ) {
-			$list_items .= '<li>' . esc_html( (string) $q ) . "</li>\n";
+	private static function apply_primary_taxonomy( array &$args, array $pattern ): void {
+		$parts = explode( ':', (string) $pattern['key'], 2 );
+		$type  = $parts[0] ?? '';
+		$slug  = $parts[1] ?? '';
+		if ( $slug === '' ) {
+			return;
 		}
-		$out .= "<!-- wp:list -->\n<ul>\n" . $list_items . "</ul>\n<!-- /wp:list -->\n\n";
 
-		$out .= "<!-- wp:separator -->\n<hr class=\"wp-block-separator has-alpha-channel-opacity\"/>\n<!-- /wp:separator -->\n\n";
-		$out .= "<!-- wp:paragraph -->\n<p>" . esc_html__( '[ Start writing here. ]', 'habit-creator' ) . "</p>\n<!-- /wp:paragraph -->";
+		if ( $type === 'tag' ) {
+			$term = get_term_by( 'slug', $slug, 'post_tag' );
+			if ( $term && ! is_wp_error( $term ) ) {
+				$args['tags_input'] = [ $term->name ];
+			}
+			return;
+		}
 
-		return $out;
+		if ( $type === 'category' ) {
+			$term = get_term_by( 'slug', $slug, 'category' );
+			if ( $term && ! is_wp_error( $term ) ) {
+				$args['post_category'] = [ (int) $term->term_id ];
+			}
+		}
 	}
 }

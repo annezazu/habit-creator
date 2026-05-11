@@ -19,8 +19,6 @@ defined( 'ABSPATH' ) || exit;
 
 final class Dashboard_Widget {
 
-	private const DISMISSED_USERMETA = 'habit_creator_dismissed';
-
 	/**
 	 * Capability required to flip the "Enhance with AI" toggle. Matches
 	 * the capability needed to update the underlying site option.
@@ -148,13 +146,6 @@ final class Dashboard_Widget {
 		$patterns = $is_mock
 			? Pattern_Detector::mock_patterns_for_user( $user_id )
 			: Pattern_Detector::patterns_for_user( $user_id );
-		if ( ! $is_mock ) {
-			$dismissed = (array) get_user_meta( $user_id, self::DISMISSED_USERMETA, true );
-			$patterns  = array_values( array_filter(
-				$patterns,
-				static fn( $p ) => ! in_array( $p['key'], $dismissed, true )
-			) );
-		}
 
 		ob_start();
 		echo '<p class="habit-creator-intro">' . esc_html__( 'Streaks from your archive — keep the habits going.', 'habit-creator' ) . '</p>';
@@ -164,97 +155,70 @@ final class Dashboard_Widget {
 			return (string) ob_get_clean();
 		}
 
-		$hero = array_shift( $patterns );
-		$rest = $patterns;
-
-		self::render_hero( $hero );
-
-		if ( $rest ) {
-			$count = count( $rest );
-			printf(
-				'<button type="button" class="habit-creator-expand" aria-expanded="false">%s</button>',
-				esc_html( sprintf(
-					/* translators: %d: number of additional streaks */
-					_n( '+%d more streak', '+%d more streaks', $count, 'habit-creator' ),
-					$count
-				) )
-			);
-			echo '<ul class="habit-creator-list" hidden>';
-			foreach ( $rest as $pattern ) {
-				self::render_secondary( $pattern );
-			}
-			echo '</ul>';
+		$total = count( $patterns );
+		echo '<div class="habit-creator-stack">';
+		foreach ( $patterns as $i => $pattern ) {
+			self::render_slide( $pattern, $i, $total );
 		}
+		echo '</div>';
 
 		return (string) ob_get_clean();
 	}
 
 	/**
+	 * One swappable habit suggestion. Only the first slide is visible on
+	 * load; "Suggest another" rotates which one shows. Multiple slides are
+	 * pre-rendered to the page so the swap is a pure DOM toggle — no
+	 * round-trip required.
+	 *
 	 * @param array<string, mixed> $pattern
 	 */
-	private static function render_hero( array $pattern ): void {
+	private static function render_slide( array $pattern, int $index, int $total ): void {
+		$hidden = $index === 0 ? '' : ' hidden';
 		?>
-		<div class="habit-creator-card is-hero" data-pattern-key="<?php echo esc_attr( (string) $pattern['key'] ); ?>">
-			<button type="button" class="habit-creator-dismiss" aria-label="<?php esc_attr_e( 'Dismiss this streak', 'habit-creator' ); ?>" title="<?php esc_attr_e( 'Not this one', 'habit-creator' ); ?>">×</button>
+		<article class="habit-creator-slide" data-slide-index="<?php echo esc_attr( (string) $index ); ?>"<?php echo $hidden; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>>
+			<div class="habit-creator-card is-hero" data-pattern-key="<?php echo esc_attr( (string) $pattern['key'] ); ?>">
+				<h3 class="habit-creator-headline"><?php echo esc_html( (string) $pattern['headline'] ); ?></h3>
+				<p class="habit-creator-body"><?php echo wp_kses_post( self::render_with_pill( (string) $pattern['body'], $pattern ) ); ?></p>
 
-			<h3 class="habit-creator-headline"><?php echo esc_html( (string) $pattern['headline'] ); ?></h3>
-			<p class="habit-creator-body"><?php echo wp_kses_post( self::render_with_pill( (string) $pattern['body'], $pattern ) ); ?></p>
-
-			<?php $prior = (array) $pattern['prior_posts']; ?>
-			<ol class="habit-creator-streak">
-				<?php foreach ( $prior as $entry ) : ?>
-					<?php
-					$post      = $entry['post'];
-					$ago       = (string) $entry['ago_label'];
-					$permalink = (string) get_permalink( (int) $post['id'] );
-					?>
-					<li class="habit-creator-streak-row is-done">
-						<span class="habit-creator-streak-icon"><?php echo self::check_icon_svg(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — trusted markup ?></span>
-						<span class="habit-creator-streak-text">
-							<span class="habit-creator-streak-ago"><?php echo esc_html( ucfirst( $ago ) ); ?></span>
-							<a class="habit-creator-streak-title" href="<?php echo esc_url( $permalink ); ?>"><?php echo esc_html( (string) $post['title'] ); ?></a>
+				<?php $prior = (array) $pattern['prior_posts']; ?>
+				<ol class="habit-creator-streak">
+					<?php foreach ( $prior as $entry ) : ?>
+						<?php
+						$post      = $entry['post'];
+						$ago       = (string) $entry['ago_label'];
+						$permalink = (string) get_permalink( (int) $post['id'] );
+						?>
+						<li class="habit-creator-streak-row is-done">
+							<span class="habit-creator-streak-line">
+								<span class="habit-creator-streak-icon"><?php echo self::check_icon_svg(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — trusted markup ?></span>
+								<span class="habit-creator-streak-ago"><?php echo esc_html( ucfirst( $ago ) ); ?></span>
+								<a class="habit-creator-streak-title" href="<?php echo esc_url( $permalink ); ?>"><?php echo esc_html( (string) $post['title'] ); ?></a>
+							</span>
+							<?php if ( ! empty( $post['excerpt'] ) ) : ?>
+								<span class="habit-creator-streak-excerpt"><?php echo esc_html( (string) $post['excerpt'] ); ?></span>
+							<?php endif; ?>
+						</li>
+					<?php endforeach; ?>
+					<li class="habit-creator-streak-row is-next">
+						<span class="habit-creator-streak-line">
+							<span class="habit-creator-streak-icon"><?php echo self::flame_icon_svg(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — trusted markup ?></span>
+							<span class="habit-creator-streak-ago"><?php echo esc_html( ucfirst( (string) $pattern['timing'] ) ); ?></span>
+							<span class="habit-creator-streak-cta">
+								<button type="button" class="button button-primary habit-creator-create"><?php
+									esc_html_e( 'Create a post', 'habit-creator' );
+								?></button>
+								<?php if ( $total > 1 ) : ?>
+									<button type="button" class="habit-creator-suggest"><?php
+										esc_html_e( 'Suggest another', 'habit-creator' );
+									?></button>
+								<?php endif; ?>
+							</span>
 						</span>
 					</li>
-				<?php endforeach; ?>
-				<li class="habit-creator-streak-row is-next">
-					<span class="habit-creator-streak-icon"><?php echo self::flame_icon_svg(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — trusted markup ?></span>
-					<span class="habit-creator-streak-text">
-						<span class="habit-creator-streak-ago"><?php echo esc_html( ucfirst( (string) $pattern['timing'] ) ); ?></span>
-						<span class="habit-creator-streak-cta">
-							<button type="button" class="button button-primary button-small habit-creator-create"><?php
-								esc_html_e( 'Create a post', 'habit-creator' );
-							?></button>
-						</span>
-					</span>
-				</li>
-			</ol>
-		</div>
-		<?php
-	}
-
-	/**
-	 * @param array<string, mixed> $pattern
-	 */
-	private static function render_secondary( array $pattern ): void {
-		$prior      = (array) $pattern['prior_posts'];
-		$last_entry = end( $prior );
-		$last_ago   = $last_entry ? (string) $last_entry['ago_label'] : '';
-		?>
-		<li class="habit-creator-card is-compact" data-pattern-key="<?php echo esc_attr( (string) $pattern['key'] ); ?>">
-			<button type="button" class="habit-creator-dismiss" aria-label="<?php esc_attr_e( 'Dismiss this streak', 'habit-creator' ); ?>">×</button>
-			<p class="habit-creator-compact-headline"><?php echo esc_html( (string) $pattern['headline'] ); ?></p>
-			<p class="habit-creator-compact-meta">
-				<?php if ( $last_ago !== '' ) : ?>
-					<span class="habit-creator-compact-last"><?php
-						/* translators: %s: relative time, e.g. "1 year ago" */
-						printf( esc_html__( 'Last: %s', 'habit-creator' ), esc_html( $last_ago ) );
-					?></span>
-				<?php endif; ?>
-				<button type="button" class="button-link habit-creator-create"><?php
-					esc_html_e( 'Create a post', 'habit-creator' );
-				?> →</button>
-			</p>
-		</li>
+				</ol>
+			</div>
+		</article>
 		<?php
 	}
 
@@ -329,22 +293,5 @@ final class Dashboard_Widget {
 			'enabled' => $on,
 			'html'    => self::render_inner( get_current_user_id(), $is_mock ),
 		] );
-	}
-
-	public static function handle_dismiss(): void {
-		check_ajax_referer( NONCE_ACTION );
-		if ( ! current_user_can( 'edit_posts' ) ) {
-			wp_send_json_error( [], 403 );
-		}
-		$pattern_key = isset( $_POST['pattern_key'] ) ? sanitize_text_field( wp_unslash( (string) $_POST['pattern_key'] ) ) : '';
-		if ( $pattern_key === '' ) {
-			wp_send_json_error( [], 400 );
-		}
-
-		$user_id     = get_current_user_id();
-		$dismissed   = (array) get_user_meta( $user_id, self::DISMISSED_USERMETA, true );
-		$dismissed[] = $pattern_key;
-		update_user_meta( $user_id, self::DISMISSED_USERMETA, array_values( array_unique( $dismissed ) ) );
-		wp_send_json_success( [ 'html' => self::render_inner( $user_id, false ) ] );
 	}
 }
