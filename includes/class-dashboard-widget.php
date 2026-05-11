@@ -63,12 +63,27 @@ final class Dashboard_Widget {
 	public static function render(): void {
 		$is_mock  = ! empty( $_GET['habit_creator_mock'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$is_empty = ! empty( $_GET['habit_creator_empty'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$user_id  = get_current_user_id();
 		echo '<div class="habit-creator">';
-		self::render_ai_toggle();
+		if ( ! $is_empty && self::has_patterns( $user_id, $is_mock ) ) {
+			self::render_ai_toggle();
+		}
 		echo '<div class="habit-creator-body-wrap">';
-		echo self::render_inner( get_current_user_id(), $is_mock, $is_empty ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — trusted markup assembled in render_inner
+		echo self::render_inner( $user_id, $is_mock, $is_empty ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — trusted markup assembled in render_inner
 		echo '</div>';
 		echo '</div>';
+	}
+
+	/**
+	 * Cheap "does the user have anything to show?" lookup used to decide
+	 * whether the AI toggle is worth rendering. Hits the same transient
+	 * cache that render_inner uses, so this is effectively free.
+	 */
+	private static function has_patterns( int $user_id, bool $is_mock ): bool {
+		$patterns = $is_mock
+			? Pattern_Detector::mock_patterns_for_user( $user_id )
+			: Pattern_Detector::patterns_for_user( $user_id );
+		return ! empty( $patterns );
 	}
 
 	/**
@@ -185,7 +200,7 @@ final class Dashboard_Widget {
 				<?php esc_html_e( 'Suggestions will appear once more posts have been created.', 'habit-creator' ); ?>
 			</p>
 			<p class="habit-creator-empty-actions">
-				<a class="button button-primary button-small" href="<?php echo esc_url( admin_url( 'post-new.php' ) ); ?>">
+				<a class="button button-primary" href="<?php echo esc_url( admin_url( 'post-new.php' ) ); ?>">
 					<?php esc_html_e( 'Create post', 'habit-creator' ); ?>
 				</a>
 			</p>
