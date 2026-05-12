@@ -1,5 +1,18 @@
+/*
+ * Strip WP's default .postbox .inside padding/margin and put 24/22
+ * chrome on .habit-creator instead. Mirrors Draft Sweeper's pattern so
+ * the floated "Uses AI" toggle (positioned 14/14 from .habit-creator)
+ * lands 14px from the postbox edges rather than 14px inside the
+ * default padded content area.
+ */
+#habit_creator_widget .inside {
+	margin: 0;
+	padding: 0;
+}
+
 .habit-creator {
 	position: relative;
+	padding: 24px 22px;
 	font-size: 13px;
 	line-height: 1.5;
 	color: #1d2327;
@@ -206,7 +219,7 @@
 }
 
 .habit-creator-card.is-hero {
-	padding: 4px 0 4px 0;
+	padding: 0;
 }
 
 .habit-creator-headline {
@@ -349,7 +362,7 @@
 }
 
 .habit-creator-streak-excerpt {
-	margin-top: -6px;
+	margin-top: -2px;
 	padding-left: 137px; /* icon-margin (4) + icon-width (28) + gap (6) + ago-margin (8) + date-width (85) + gap (6) — aligns with title start */
 	font-size: 12px;
 	line-height: 1.3;
