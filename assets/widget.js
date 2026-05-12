@@ -51,7 +51,7 @@
 			event.preventDefault();
 			const next     = toggleBtn.getAttribute( 'aria-checked' ) !== 'true';
 			const wrap     = toggleBtn.closest( '.habit-creator-ai-toggle' );
-			const caption  = wrap ? wrap.querySelector( '.habit-creator-ai-toggle__caption' ) : null;
+			const tooltip  = wrap ? wrap.querySelector( '.habit-creator-ai-toggle__tooltip' ) : null;
 			const root     = toggleBtn.closest( '.habit-creator' );
 			const bodyWrap = root ? root.querySelector( '.habit-creator-body-wrap' ) : null;
 
@@ -59,10 +59,10 @@
 			toggleBtn.classList.toggle( 'is-checked', next );
 			toggleBtn.setAttribute( 'aria-checked', next ? 'true' : 'false' );
 			toggleBtn.classList.add( 'is-saving' );
-			if ( caption ) {
-				caption.textContent = next
-					? caption.dataset.on
-					: caption.dataset.off;
+			if ( tooltip ) {
+				tooltip.textContent = next
+					? tooltip.dataset.on
+					: tooltip.dataset.off;
 			}
 
 			postToggle( next ).then( ( res ) => {
@@ -71,10 +71,10 @@
 					// Revert on failure.
 					toggleBtn.classList.toggle( 'is-checked', ! next );
 					toggleBtn.setAttribute( 'aria-checked', next ? 'false' : 'true' );
-					if ( caption ) {
-						caption.textContent = next
-							? caption.dataset.off
-							: caption.dataset.on;
+					if ( tooltip ) {
+						tooltip.textContent = next
+							? tooltip.dataset.off
+							: tooltip.dataset.on;
 					}
 					return;
 				}

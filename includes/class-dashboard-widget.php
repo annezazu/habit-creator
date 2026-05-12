@@ -115,6 +115,7 @@ final class Dashboard_Widget {
 				role="switch"
 				aria-checked="<?php echo $on ? 'true' : 'false'; ?>"
 				aria-labelledby="habit-creator-ai-toggle-label"
+				aria-describedby="habit-creator-ai-toggle-help"
 			>
 				<span class="components-form-toggle__track" aria-hidden="true"></span>
 				<span class="components-form-toggle__thumb" aria-hidden="true"></span>
@@ -123,12 +124,18 @@ final class Dashboard_Widget {
 			<label
 				id="habit-creator-ai-toggle-label"
 				class="habit-creator-ai-toggle__label"
-			><?php esc_html_e( 'Enhance with AI', 'habit-creator' ); ?></label>
-			<span class="habit-creator-ai-toggle__caption" data-on="<?php esc_attr_e( 'New drafts include AI starter questions.', 'habit-creator' ); ?>" data-off="<?php esc_attr_e( 'AI is off — drafts start blank.', 'habit-creator' ); ?>"><?php
+			><?php esc_html_e( 'Uses AI', 'habit-creator' ); ?></label>
+			<span
+				id="habit-creator-ai-toggle-help"
+				class="habit-creator-ai-toggle__tooltip"
+				role="tooltip"
+				data-on="<?php esc_attr_e( 'New drafts include AI starter questions.', 'habit-creator' ); ?>"
+				data-off="<?php esc_attr_e( 'Drafts start blank.', 'habit-creator' ); ?>"
+			><?php
 				echo esc_html(
 					$on
 						? __( 'New drafts include AI starter questions.', 'habit-creator' )
-						: __( 'AI is off — drafts start blank.', 'habit-creator' )
+						: __( 'Drafts start blank.', 'habit-creator' )
 				);
 			?></span>
 		</div>

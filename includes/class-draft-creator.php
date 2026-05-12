@@ -1,8 +1,12 @@
 <?php
 /**
- * Creates a fresh, empty draft for a recurring pattern. The only
- * pre-populated bit is the pattern's primary tag or category — no
- * title, no body, no carry-over from prior posts.
+ * Creates a new draft for a recurring pattern.
+ *
+ * Default behaviour is a blank canvas — no title, no body, just the
+ * pattern's primary tag/category preset. When the "Uses AI" toggle is
+ * on and an AI provider is registered, AI_Enhancer::generate_writing_
+ * prompts() drops a short list of topic-specific starter questions
+ * into the body for the writer to chew on. Questions only; never prose.
  *
  * @package HabitCreator
  */
@@ -59,17 +63,28 @@ final class Draft_Creator {
 	 * @return int|\WP_Error
 	 */
 	private static function insert_draft( array $pattern, int $user_id ) {
+		$content = '';
+		$used_ai = false;
+		if ( class_exists( __NAMESPACE__ . '\\AI_Enhancer' ) && AI_Enhancer::is_available() ) {
+			$questions = AI_Enhancer::generate_writing_prompts( $pattern );
+			if ( $questions ) {
+				$content = self::questions_block( $questions );
+				$used_ai = true;
+			}
+		}
+
 		$args = [
 			// auto-draft is WP's canonical "new empty post" status — the
 			// same one that /wp-admin/post-new.php creates. The block
 			// editor auto-converts to 'draft' the moment the user types.
 			'post_status'  => 'auto-draft',
 			'post_author'  => $user_id,
-			'post_title'   => '',
-			'post_content' => '',
+			'post_title'   => (string) ( $pattern['topic'] ?? '' ),
+			'post_content' => $content,
 			'post_type'    => 'post',
 			'meta_input'   => [
 				'_habit_creator_pattern_key' => (string) $pattern['key'],
+				'_habit_creator_used_ai'     => $used_ai ? '1' : '0',
 			],
 		];
 
@@ -77,13 +92,28 @@ final class Draft_Creator {
 
 		// wp_insert_post rejects posts with empty title/content/excerpt
 		// via the `wp_insert_post_empty_content` filter regardless of
-		// status. Suppress it for just this insertion — we genuinely want
-		// a blank canvas with only a tag/category preset.
+		// status. Suppress it for just this insertion — when the toggle
+		// is off we genuinely want a blank canvas with only a tag preset.
 		add_filter( 'wp_insert_post_empty_content', '__return_false' );
 		$post_id = wp_insert_post( $args, true );
 		remove_filter( 'wp_insert_post_empty_content', '__return_false' );
 
 		return $post_id;
+	}
+
+	/**
+	 * Wrap the AI-generated questions in a block-editor list block so the
+	 * user lands on a clean bulleted scaffold they can edit, expand, or
+	 * delete entirely.
+	 *
+	 * @param array<int, string> $questions
+	 */
+	private static function questions_block( array $questions ): string {
+		$items = '';
+		foreach ( $questions as $q ) {
+			$items .= '<li>' . esc_html( (string) $q ) . "</li>\n";
+		}
+		return "<!-- wp:list -->\n<ul>\n" . $items . "</ul>\n<!-- /wp:list -->";
 	}
 
 	/**
