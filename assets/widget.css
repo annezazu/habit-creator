@@ -1,4 +1,5 @@
 .habit-creator {
+	position: relative;
 	font-size: 13px;
 	line-height: 1.5;
 	color: #1d2327;
@@ -16,24 +17,28 @@
 }
 
 /*
- * "Enhance with AI" toggle — visual replica of @wordpress/components
- * FormToggle (the inner control of ToggleControl). We reuse the
- * .components-form-toggle classnames so anyone reading the markup
- * recognizes it as the standard WP toggle, but inline the styles here
- * so we don't pull in the full wp-components CSS bundle for one switch.
+ * "Uses AI" toggle — minimal chrome floated top-right of the widget
+ * body. Visual replica of @wordpress/components FormToggle (the inner
+ * control of ToggleControl). We reuse the .components-form-toggle
+ * classnames so anyone reading the markup recognizes it as the
+ * standard WP toggle, but inline the styles here so we don't pull in
+ * the full wp-components CSS bundle for one switch. Same pattern as
+ * Draft Sweeper so the two widgets feel like one feature.
  *
  * Track 36×18, thumb 12×12, slides 14px on check. Theme color comes
  * from --wp-admin-theme-color so the toggle adopts the active admin
  * color scheme like the rest of the widget.
  */
 .habit-creator-ai-toggle {
+	position: absolute;
+	top: 14px;
+	right: 14px;
+	z-index: 1;
 	display: flex;
+	flex-direction: row-reverse;
 	align-items: center;
-	flex-wrap: wrap;
-	gap: 4px 8px;
-	margin: 0 0 12px;
-	padding: 0 0 10px;
-	border-bottom: 1px solid #f0f0f1;
+	gap: 8px;
+	margin: 0;
 }
 
 .habit-creator-ai-toggle__form-toggle {
@@ -141,17 +146,40 @@
 }
 
 .habit-creator-ai-toggle__label {
-	font-size: 13px;
-	color: #1d2327;
+	font-size: 12px;
+	color: #787c82;
 	cursor: pointer;
 	user-select: none;
 }
 
-.habit-creator-ai-toggle__caption {
-	flex: 1 0 100%;
-	margin-left: 44px; /* track width + gap, so caption hangs under the label */
+/*
+ * Tooltip — visually hidden until the wrapper is hovered or the toggle
+ * receives keyboard focus. Sits just below the toggle, anchored to its
+ * right edge so it doesn't overflow the widget on narrow viewports.
+ */
+.habit-creator-ai-toggle__tooltip {
+	position: absolute;
+	top: calc( 100% + 6px );
+	right: 0;
+	z-index: 2;
+	padding: 6px 10px;
+	border-radius: 4px;
+	background: #1d2327;
+	color: #fff;
 	font-size: 12px;
-	color: #757575;
+	line-height: 1.4;
+	white-space: nowrap;
+	pointer-events: none;
+	opacity: 0;
+	transform: translateY( -2px );
+	transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.habit-creator-ai-toggle:hover .habit-creator-ai-toggle__tooltip,
+.habit-creator-ai-toggle__form-toggle:focus-visible ~ .habit-creator-ai-toggle__tooltip,
+.habit-creator-ai-toggle__label:focus-visible ~ .habit-creator-ai-toggle__tooltip {
+	opacity: 1;
+	transform: translateY( 0 );
 }
 
 .habit-creator-empty-lead {
@@ -182,6 +210,8 @@
 }
 
 .habit-creator-headline {
+	/* Right-padding leaves room for the absolute top-right "Uses AI" toggle. */
+	padding-right: 100px;
 	margin: 0 0 6px;
 	font-size: 16px;
 	font-weight: 600;
